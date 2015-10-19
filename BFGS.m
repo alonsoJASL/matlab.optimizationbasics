@@ -6,7 +6,7 @@ function [xstar, it, kfail] = BFGS(fname, x0, maxITER, varargin)
 % metodo de Gradiente conjugado. Usa SPARSE MATRICES, y toma en cuenta los
 % argumentos extra que pueda necesitar la funcion fname.
 %
-% usage:     [xout, it, kfail] = BFGS(fname, xin, maxITER)
+% usage:     [xout, it, kfail] = BFGS(fname, xin, maxITER, fnameArgs
 %           donde:
 %                SALIDA
 %                  xstar := aproximacion al minimo local.
@@ -31,12 +31,12 @@ function [xstar, it, kfail] = BFGS(fname, x0, maxITER, varargin)
 if nargin < 3
     maxITER = 100;
 end
-tol = 10e-6; % tolerancia
+tol = 1e-2; % tolerancia
 n = length(x0); 
 
 %---- Para las condiciones de Wolfe ----:
 maxW = 30;
-c = [10e-4;0.9];
+c = [10e-4;1];
 
 %---- Inicializacion --------------------
 xk = x0;
@@ -62,16 +62,23 @@ while ~termine
     yk = yaux - gk;
     
     % Actualizacion de BFGS
-    if (cond(B)>100)
+    if (cond(Bk)>100)
         Bk = speye(n);
         kfail = kfail+1;
+      %  disp('Fail');
     else
         Bk = Bk - ((Bk*(sk*sk')*Bk)/(sk'*Bk*sk))...
             + ((yk*yk')/(yk'*sk));
+        if (cond(Bk)>1000)
+            Bk = speye(n);
+            kfail = kfail+1;
+        end
     end
     k = k+1;
     termine = (k >= maxITER || norm(gk) <= tol);
-    disp(norm(gk));
+    %disp([fxk norm(gk) cond(Bk)]);
+    
+    
 end
 
 xstar = xk;
