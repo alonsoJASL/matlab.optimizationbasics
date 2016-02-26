@@ -1,7 +1,10 @@
-function [xstar, fOptim, failcount] = genericpso(fname, frestr, X0, tol, maxIt)
+function [xstar, fOptim, failcount] = genericpso(fname, frestr, X0, tol, ...
+                                                    maxIt, varargin)
 % 	 PARTICLE SWARM OPTIMISATION
 % Computes the PArticle Swarm Optimisation algorithm for fname(x),
 % given the restrictions in frest(x).
+% 
+% [xstar, fOptim, failcount] = genericpso(fname, frestr, X0, tol, maxIt)
 % 
     
 if nargin < 3
@@ -32,7 +35,7 @@ if restrictions == true
         fOptim = [];
         failcount=[];
         return;
-    else 
+    else
         % Initialize particles.
         aT = 0.5 + rand(1,N);
         x = X0*aT; % matrix
@@ -42,9 +45,13 @@ if restrictions == true
             x(:,i) = X0;
         end
     end
+else
+    % Initialize particles.
+    aT = 0.5 + rand(1,N);
+    x = X0*aT; % matrix
 end
 
-v = zeros(size(X));
+v = zeros(size(x));
 
 gBest = 0;
 pBest = zeros(size(x));
@@ -54,9 +61,9 @@ valF = zeros(N,1);
 count = 0;
 failc = 0;
 
-while count <= maxIter
-    for i=1:N
-        evalRes = feval(fname, x(:,i));
+while count <= maxIter || norm(gradBest)>tol
+    parfor i=1:N
+        evalRes = feval(fname, x(:,i), varargin{:});
         if pBestValue(i) < evalRes
             pBest(:,i) = x(:,i);
             pBestValue(i) = evalRes;
@@ -89,6 +96,8 @@ while count <= maxIter
         end
     end
     count = count + 1;
+    [~,gradBest] = feval(fname, x(:,whoBest), varargin{:});
+    
 end
 
 xstar = x(:,whoBest);
